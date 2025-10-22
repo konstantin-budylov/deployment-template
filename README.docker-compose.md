@@ -241,51 +241,40 @@ docker-compose down
 3. Changes are reflected immediately (no rebuild needed)
 
 ### PHP Configuration
-The project includes a customizable PHP configuration:
+The project uses the default PHP configuration from the container. PHP settings can be customized by modifying the container's built-in configuration or by adding custom configuration files.
 
-#### PHP Configuration File
-- **Location**: `deployment/config/php.ini`
-- **Container Path**: `/etc/php84/php.ini`
-- **Mount Type**: Read-only volume mount
-- **Customization**: Edit `deployment/config/php.ini` to modify PHP settings
+#### Default PHP Settings
+The container includes optimized PHP settings for development:
+- **Memory Limit**: 128M (default)
+- **Execution Time**: 30 seconds (default)
+- **Error Reporting**: E_ALL (default)
+- **File Uploads**: 2M (default)
 
-#### Common PHP Settings
-```ini
-# Memory and execution limits
-memory_limit = 256M
-max_execution_time = 30
-max_input_time = 60
+#### Customizing PHP Settings
+To modify PHP settings, you can:
+1. **Edit the Dockerfile** to install custom PHP configuration
+2. **Add custom .ini files** to `/etc/php84/conf.d/` directory
+3. **Use environment variables** for specific settings
 
-# File uploads
-upload_max_filesize = 64M
-post_max_size = 64M
-
-# Error reporting (development)
-display_errors = On
-error_reporting = E_ALL
-
-# Session settings
-session.gc_maxlifetime = 1440
-session.cookie_lifetime = 0
-```
-
-#### Applying PHP Configuration Changes
+#### Verifying PHP Configuration
 ```bash
-# Restart container to apply php.ini changes
-docker-compose restart web
-
-# Verify configuration
+# Check current PHP settings
 docker-compose exec web php84 --ini
+
+# View specific settings
+docker-compose exec web php84 -i | grep memory_limit
+docker-compose exec web php84 -i | grep upload_max_filesize
 ```
 
 ### Xdebug Configuration
 The project includes Xdebug for PHP debugging and development:
 
-#### Xdebug Configuration File
-- **Location**: `deployment/config/xdebug.ini`
+#### Xdebug Installation
+- **Installed in Dockerfile**: Xdebug is properly installed during image build
+- **Version**: Xdebug v3.4.6 (installed via `php84-xdebug` package)
+- **Configuration File**: `deployment/config/xdebug.ini`
 - **Container Path**: `/etc/php84/conf.d/50_xdebug.ini`
-- **Mount Type**: Read-only volume mount
-- **Version**: Xdebug v3.4.6
+- **Mount Type**: Read-only volume mount for custom configuration
 
 #### Xdebug Settings
 ```ini

@@ -25,7 +25,6 @@ This project uses environment variables to configure Docker Compose settings. Th
 
 ### SSL Certificate Paths
 - `SSL_CERT_PATH` - SSL certificate directory path
-- `SSL_KEY_PATH` - SSL private key path (not used in compose, for reference)
 
 ### Application Settings
 - `APP_NAME` - Application name (default: manogama)
