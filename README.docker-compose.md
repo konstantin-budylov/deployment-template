@@ -278,6 +278,72 @@ docker-compose restart web
 docker-compose exec web php84 --ini
 ```
 
+### Xdebug Configuration
+The project includes Xdebug for PHP debugging and development:
+
+#### Xdebug Configuration File
+- **Location**: `deployment/config/xdebug.ini`
+- **Container Path**: `/etc/php84/conf.d/50_xdebug.ini`
+- **Mount Type**: Read-only volume mount
+- **Version**: Xdebug v3.4.6
+
+#### Xdebug Settings
+```ini
+; Enable Xdebug extension
+zend_extension=xdebug.so
+
+; Xdebug mode - enable debugging and profiling
+xdebug.mode=debug,develop
+
+; Client host for debugging (Docker Desktop / Docker for Mac/Windows)
+xdebug.client_host=host.docker.internal
+
+; Default port for debugging
+xdebug.client_port=9003
+
+; Start debugging on every request (for development)
+xdebug.start_with_request=yes
+
+; IDE key (can be customized in IDE)
+xdebug.idekey=PHPSTORM
+```
+
+#### IDE Configuration
+Configure your IDE to connect to Xdebug:
+
+**PhpStorm/IntelliJ:**
+1. Go to Settings → PHP → Debug
+2. Set Xdebug port to `9003`
+3. Enable "Break at first line in PHP scripts"
+4. Set IDE key to `PHPSTORM`
+
+**VS Code:**
+1. Install PHP Debug extension
+2. Configure `launch.json`:
+```json
+{
+    "name": "Listen for Xdebug",
+    "type": "php",
+    "request": "launch",
+    "port": 9003,
+    "pathMappings": {
+        "/var/www/html": "${workspaceFolder}"
+    }
+}
+```
+
+#### Applying Xdebug Configuration Changes
+```bash
+# Restart container to apply xdebug.ini changes
+docker-compose restart web
+
+# Verify Xdebug configuration
+docker-compose exec web php84 -i | grep xdebug
+
+# Test Xdebug functions
+docker-compose exec web php84 -r "var_dump(function_exists('xdebug_info'));"
+```
+
 ### Environment Variables
 The project supports flexible configuration through environment variables:
 
@@ -319,12 +385,13 @@ HTTP_PORT=9000 HTTPS_PORT=9443 ./deployment/tests/run-tests.sh
 #### Test Coverage
 - ✅ **Nginx Functionality**: Process, ports, connectivity, configuration, PHP-FPM
 - ✅ **SSL/TLS Security**: Certificates, handshake, protocols, security headers
+- ✅ **Xdebug Functionality**: Extension loading, configuration, client host, port, IDE key
 - ✅ **Container Health**: Health status and container monitoring
 - ✅ **External Connectivity**: HTTP redirect and HTTPS access
 
 #### Test Results
 ```
-Tests passed: 4/4
+Tests passed: 5/5
 🎉 All tests passed! The Docker setup is working correctly.
 ```
 
@@ -378,6 +445,10 @@ docker-compose exec web php84 -i | grep upload_max_filesize
 
 # Test PHP configuration changes
 docker-compose exec web php84 -m  # List loaded modules
+
+# Test Xdebug configuration
+docker-compose exec web php84 -i | grep xdebug
+docker-compose exec web php84 -r "var_dump(function_exists('xdebug_info'));"
 ```
 
 ## Performance Considerations

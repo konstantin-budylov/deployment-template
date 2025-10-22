@@ -87,7 +87,26 @@ fi
 
 print_result $SSL_RESULT "SSL/TLS functionality test"
 
-# Test 3: Container Health Check
+# Test 3: Xdebug Functionality
+print_section "Testing Xdebug Functionality"
+
+if [ "$RUNNING_IN_CONTAINER" = true ]; then
+    # Run directly inside container
+    bash "$SCRIPT_DIR/test-xdebug.sh"
+    XDEBUG_RESULT=$?
+else
+    # Run via docker-compose exec
+    echo "Running Xdebug tests via docker-compose..."
+    if docker-compose exec -T web sh /var/www/html/deployment/tests/test-xdebug.sh; then
+        XDEBUG_RESULT=0
+    else
+        XDEBUG_RESULT=1
+    fi
+fi
+
+print_result $XDEBUG_RESULT "Xdebug functionality test"
+
+# Test 4: Container Health Check
 print_section "Testing Container Health"
 
 if [ "$RUNNING_IN_CONTAINER" = false ]; then
@@ -167,6 +186,11 @@ fi
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
 if [ $SSL_RESULT -eq 0 ]; then
+    PASSED_TESTS=$((PASSED_TESTS + 1))
+fi
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+
+if [ $XDEBUG_RESULT -eq 0 ]; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
 fi
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
