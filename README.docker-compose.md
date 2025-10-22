@@ -97,6 +97,21 @@ php-fpm84 -D          # Start PHP-FPM in background
 nginx -g "daemon off;" # Start Nginx in foreground
 ```
 
+## Directory Structure
+
+```
+deployment/
+├── config/
+│   └── nginx/
+│       ├── nginx.conf          # Main nginx configuration
+│       ├── ssl.conf            # SSL configuration (modular)
+│       └── ssl/
+│           ├── nginx.crt       # SSL certificate
+│           └── nginx.key       # SSL private key
+└── images/
+    └── Dockerfile              # Custom nginx + PHP 8.4-FPM image
+```
+
 ## Docker Compose Configuration
 
 ### Service Definition
@@ -109,23 +124,45 @@ services:
     container_name: web
     ports:
       - "8000:80"
+      - "8443:443"
     volumes:
       - .:/var/www/html
-      - ./deployment/config/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./deployment/config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./deployment/config/nginx/ssl.conf:/etc/nginx/conf.d/ssl.conf
+      - ./deployment/config/nginx/ssl:/etc/nginx/ssl:ro
     working_dir: /var/www/html
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:443/ || curl -f http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 ```
 
 ### Volume Mappings
 - **Project Root** → `/var/www/html` (Application files)
 - **Nginx Config** → `/etc/nginx/conf.d/default.conf` (Server configuration)
+- **SSL Config** → `/etc/nginx/conf.d/ssl.conf` (SSL settings)
+- **SSL Certificates** → `/etc/nginx/ssl/` (SSL certificates)
 
 ### Port Mapping
-- **Host Port**: 8000
-- **Container Port**: 80 (Nginx)
+- **Host Port**: 8000 → **Container Port**: 80 (HTTP - redirects to HTTPS)
+- **Host Port**: 8443 → **Container Port**: 443 (HTTPS)
 
 ## Nginx Configuration
 
-The Nginx configuration (`deployment/config/nginx.conf`) includes:
+The Nginx configuration is split into modular files:
+
+### Main Configuration (`deployment/config/nginx/nginx.conf`)
+- **HTTP Server**: Redirects to HTTPS
+- **HTTPS Server**: Main application server
+- **Includes**: SSL configuration via `include /etc/nginx/conf.d/ssl.conf;`
+
+### SSL Configuration (`deployment/config/nginx/ssl.conf`)
+- **SSL Certificates**: Certificate and key paths
+- **SSL Protocols**: TLSv1.2 and TLSv1.3
+- **SSL Ciphers**: Secure cipher suites
+- **Security Headers**: HSTS, X-Frame-Options, etc.
 
 ### Server Block
 ```nginx
@@ -183,11 +220,20 @@ docker-compose down
 - **Document Root**: `/var/www/html` (mapped to project root)
 
 ### SSL/HTTPS Configuration
-- **SSL Certificates**: Self-signed certificates in `deployment/ssl/`
+- **SSL Certificates**: Self-signed certificates in `deployment/config/nginx/ssl/`
+- **SSL Configuration**: Separate `ssl.conf` file for modular SSL settings
 - **Certificate Validity**: 1 year (development use)
 - **Security Headers**: HSTS, X-Frame-Options, X-Content-Type-Options, etc.
 - **TLS Protocols**: TLSv1.2 and TLSv1.3
 - **HTTP/2**: Enabled for better performance
+
+### Health Monitoring
+- **Healthcheck**: Automatic nginx service monitoring
+- **Test Command**: HTTPS primary, HTTP fallback
+- **Interval**: 30 seconds between checks
+- **Timeout**: 10 seconds per check
+- **Retries**: 3 consecutive failures before unhealthy
+- **Start Period**: 40 seconds grace period
 
 ### Development Workflow
 1. Place PHP files in the project root
@@ -211,8 +257,17 @@ docker-compose logs web
 docker-compose exec web sh
 ```
 
+### Check Health Status
+```bash
+# View health status
+docker inspect web --format='{{json .State.Health}}' | jq .
+
+# Manual health check
+docker-compose exec web curl -f -k https://localhost:443/ || curl -f http://localhost:80/
+```
+
 ### Verify PHP Extensions
-Visit `http://localhost:8000` to see the PHP info page showing loaded extensions.
+Visit `https://localhost:8443` to see the PHP info page showing loaded extensions.
 
 ## Performance Considerations
 
