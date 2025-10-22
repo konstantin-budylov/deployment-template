@@ -237,8 +237,61 @@ docker-compose down
 
 ### Development Workflow
 1. Place PHP files in the project root
-2. Files are automatically available at `http://localhost:8000`
+2. Files are automatically available at `http://localhost:8000` (redirects to HTTPS)
 3. Changes are reflected immediately (no rebuild needed)
+
+### Environment Variables
+The project supports flexible configuration through environment variables:
+
+#### Setup Environment Variables
+```bash
+# Copy the environment template
+cp env.dist .env
+
+# Edit the .env file with your settings
+nano .env
+```
+
+#### Available Variables
+- `HTTP_PORT` - HTTP port mapping (default: 8000)
+- `HTTPS_PORT` - HTTPS port mapping (default: 8443)
+- `NGINX_CONTAINER_NAME` - Container name (default: web)
+- `SSL_CERT_PATH` - SSL certificate directory
+- `NGINX_CONFIG_PATH` - Nginx configuration file path
+- `NGINX_SSL_CONFIG_PATH` - SSL configuration file path
+- `HEALTH_CHECK_*` - Health check timing settings
+
+#### Custom Ports Example
+```bash
+# .env file
+HTTP_PORT=9000
+HTTPS_PORT=9443
+NGINX_CONTAINER_NAME=manogama-web
+```
+
+### Testing
+The project includes a comprehensive test suite:
+
+#### Run All Tests
+```bash
+# Run complete test suite
+./deployment/tests/run-tests.sh
+
+# Run with custom ports
+HTTP_PORT=9000 HTTPS_PORT=9443 ./deployment/tests/run-tests.sh
+```
+
+#### Test Coverage
+- ✅ **Nginx Functionality**: Process, ports, connectivity, configuration, PHP-FPM
+- ✅ **SSL/TLS Security**: Certificates, handshake, protocols, security headers
+- ✅ **Container Health**: Health status and container monitoring
+- ✅ **External Connectivity**: HTTP redirect and HTTPS access
+
+#### Test Results
+```
+Tests passed: 4/4
+🎉 All tests passed! The Docker setup is working correctly.
+```
 
 ## Troubleshooting
 
@@ -268,6 +321,16 @@ docker-compose exec web curl -f -k https://localhost:443/ || curl -f http://loca
 
 ### Verify PHP Extensions
 Visit `https://localhost:8443` to see the PHP info page showing loaded extensions.
+
+### Run Test Suite
+```bash
+# Run comprehensive test suite
+./deployment/tests/run-tests.sh
+
+# Run individual tests
+docker-compose exec web sh /var/www/html/deployment/tests/test-nginx.sh
+docker-compose exec web sh /var/www/html/deployment/tests/test-ssl.sh
+```
 
 ## Performance Considerations
 

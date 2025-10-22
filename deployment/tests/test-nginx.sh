@@ -5,6 +5,12 @@
 
 set -e
 
+# Load environment variables from .env file if it exists
+if [ -f "/var/www/html/.env" ]; then
+    echo "📋 Loading environment variables from .env file"
+    export $(grep -v '^#' /var/www/html/.env | xargs)
+fi
+
 echo "🔍 Testing Nginx Availability and Functionality"
 echo "=============================================="
 

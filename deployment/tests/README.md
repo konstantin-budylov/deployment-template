@@ -5,12 +5,15 @@ This directory contains test scripts to verify the functionality and availabilit
 ## Test Scripts
 
 ### `run-tests.sh` - Main Test Runner
-The main test script that runs all available tests. Can be executed from the host system or inside the container.
+The main test script that runs all available tests. Can be executed from the host system or inside the container. Automatically loads environment variables from `.env` file.
 
 **Usage:**
 ```bash
-# From host system
+# From host system (uses .env file automatically)
 ./deployment/tests/run-tests.sh
+
+# With custom environment variables
+HTTP_PORT=9000 HTTPS_PORT=9443 ./deployment/tests/run-tests.sh
 
 # Inside container
 bash /var/www/html/deployment/tests/run-tests.sh
@@ -69,6 +72,21 @@ The test scripts provide colored output with:
 - ❌ Red: Test failed
 - ℹ️ Blue: Information
 - 🎉 Success: All tests passed
+
+## Environment Variables Support
+
+The test scripts automatically load environment variables from the `.env` file (if present) and support the following variables:
+
+- `HTTP_PORT` - HTTP port for testing (default: 8000)
+- `HTTPS_PORT` - HTTPS port for testing (default: 8443)
+- `NGINX_CONTAINER_NAME` - Container name for health checks (default: web)
+
+**Example .env file:**
+```bash
+HTTP_PORT=9000
+HTTPS_PORT=9443
+NGINX_CONTAINER_NAME=manogama-web
+```
 
 ## Prerequisites
 

@@ -5,6 +5,12 @@
 
 set -e
 
+# Load environment variables from .env file if it exists
+if [ -f ".env" ]; then
+    echo "📋 Loading environment variables from .env file"
+    export $(grep -v '^#' .env | xargs)
+fi
+
 echo "🧪 Docker Container Test Suite"
 echo "==============================="
 
@@ -85,24 +91,27 @@ print_result $SSL_RESULT "SSL/TLS functionality test"
 print_section "Testing Container Health"
 
 if [ "$RUNNING_IN_CONTAINER" = false ]; then
+    # Use environment variable or default for container name
+    CONTAINER_NAME=${NGINX_CONTAINER_NAME:-web}
+    
     # Check container health status
-    HEALTH_STATUS=$(docker inspect web --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+    HEALTH_STATUS=$(docker inspect $CONTAINER_NAME --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
     
     if [ "$HEALTH_STATUS" = "healthy" ]; then
-        print_result 0 "Container health check: $HEALTH_STATUS"
+        print_result 0 "Container health check ($CONTAINER_NAME): $HEALTH_STATUS"
         HEALTH_RESULT=0
     else
-        print_result 1 "Container health check: $HEALTH_STATUS"
+        print_result 1 "Container health check ($CONTAINER_NAME): $HEALTH_STATUS"
         HEALTH_RESULT=1
     fi
     
     # Check if container is running
-    CONTAINER_STATUS=$(docker-compose ps --services --filter "status=running" | grep -q web && echo "running" || echo "not running")
+    CONTAINER_STATUS=$(docker-compose ps --services --filter "status=running" | grep -q $CONTAINER_NAME && echo "running" || echo "not running")
     
     if [ "$CONTAINER_STATUS" = "running" ]; then
-        print_result 0 "Container status: $CONTAINER_STATUS"
+        print_result 0 "Container status ($CONTAINER_NAME): $CONTAINER_STATUS"
     else
-        print_result 1 "Container status: $CONTAINER_STATUS"
+        print_result 1 "Container status ($CONTAINER_NAME): $CONTAINER_STATUS"
     fi
 else
     echo "Skipping container health check (running inside container)"
@@ -113,20 +122,26 @@ fi
 if [ "$RUNNING_IN_CONTAINER" = false ]; then
     print_section "Testing External Connectivity"
     
+    # Use environment variables or defaults
+    HTTP_PORT=${HTTP_PORT:-8000}
+    HTTPS_PORT=${HTTPS_PORT:-8443}
+    
+    echo "Testing HTTP on port $HTTP_PORT and HTTPS on port $HTTPS_PORT"
+    
     # Test HTTP redirect
-    HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ || echo "000")
+    HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$HTTP_PORT/ || echo "000")
     if [ "$HTTP_RESPONSE" = "301" ]; then
-        print_result 0 "HTTP redirect working (Status: $HTTP_RESPONSE)"
+        print_result 0 "HTTP redirect working on port $HTTP_PORT (Status: $HTTP_RESPONSE)"
     else
-        print_result 1 "HTTP redirect failed (Status: $HTTP_RESPONSE)"
+        print_result 1 "HTTP redirect failed on port $HTTP_PORT (Status: $HTTP_RESPONSE)"
     fi
     
     # Test HTTPS access
-    HTTPS_RESPONSE=$(curl -s -k -o /dev/null -w "%{http_code}" https://localhost:8443/ || echo "000")
+    HTTPS_RESPONSE=$(curl -s -k -o /dev/null -w "%{http_code}" https://localhost:$HTTPS_PORT/ || echo "000")
     if [ "$HTTPS_RESPONSE" = "200" ]; then
-        print_result 0 "HTTPS access working (Status: $HTTPS_RESPONSE)"
+        print_result 0 "HTTPS access working on port $HTTPS_PORT (Status: $HTTPS_RESPONSE)"
     else
-        print_result 1 "HTTPS access failed (Status: $HTTPS_RESPONSE)"
+        print_result 1 "HTTPS access failed on port $HTTPS_PORT (Status: $HTTPS_RESPONSE)"
     fi
     
     if [ "$HTTP_RESPONSE" = "301" ] && [ "$HTTPS_RESPONSE" = "200" ]; then
