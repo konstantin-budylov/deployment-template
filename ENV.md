@@ -27,20 +27,10 @@ This project uses environment variables to configure Docker Compose settings. Th
 - `SSL_CERT_PATH` - SSL certificate directory path
 - `SSL_KEY_PATH` - SSL private key path (not used in compose, for reference)
 
-### Nginx Configuration Paths
-- `NGINX_CONFIG_PATH` - Main nginx configuration file
-- `NGINX_SSL_CONFIG_PATH` - SSL configuration file
-
 ### Application Settings
 - `APP_NAME` - Application name (default: manogama)
 - `APP_ENV` - Environment (development/production)
 - `APP_DEBUG` - Debug mode (true/false)
-
-### Health Check Settings
-- `HEALTH_CHECK_INTERVAL` - Health check interval (default: 30s)
-- `HEALTH_CHECK_TIMEOUT` - Health check timeout (default: 10s)
-- `HEALTH_CHECK_RETRIES` - Number of retries (default: 3)
-- `HEALTH_CHECK_START_PERIOD` - Start period grace time (default: 40s)
 
 ## Usage Examples
 
@@ -60,7 +50,6 @@ HTTP_PORT=80
 HTTPS_PORT=443
 APP_ENV=production
 APP_DEBUG=false
-HEALTH_CHECK_INTERVAL=60s
 ```
 
 ### Custom Ports

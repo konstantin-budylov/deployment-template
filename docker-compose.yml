@@ -10,14 +10,14 @@ services:
       - "${HTTP_PORT:-8000}:80"
       - "${HTTPS_PORT:-8443}:443"
     volumes:
-      - .:/var/www/html
-      - ${NGINX_CONFIG_PATH:-./deployment/config/nginx/nginx.conf}:/etc/nginx/conf.d/default.conf
-      - ${NGINX_SSL_CONFIG_PATH:-./deployment/config/nginx/ssl.conf}:/etc/nginx/conf.d/ssl.conf
-      - ${SSL_CERT_PATH:-./deployment/config/nginx/ssl}:/etc/nginx/ssl:ro
+          - .:/var/www/html
+          - ./deployment/config/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+          - ./deployment/config/nginx/ssl.conf:/etc/nginx/conf.d/ssl.conf
+          - ${SSL_CERT_PATH:-./deployment/config/nginx/ssl}:/etc/nginx/ssl:ro
     working_dir: /var/www/html
     healthcheck:
       test: ["CMD-SHELL", "curl -f -k https://localhost:443/ || curl -f http://localhost:80/"]
-      interval: ${HEALTH_CHECK_INTERVAL:-30s}
-      timeout: ${HEALTH_CHECK_TIMEOUT:-10s}
-      retries: ${HEALTH_CHECK_RETRIES:-3}
-      start_period: ${HEALTH_CHECK_START_PERIOD:-40s}
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

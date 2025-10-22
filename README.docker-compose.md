@@ -257,9 +257,6 @@ nano .env
 - `HTTPS_PORT` - HTTPS port mapping (default: 8443)
 - `NGINX_CONTAINER_NAME` - Container name (default: web)
 - `SSL_CERT_PATH` - SSL certificate directory
-- `NGINX_CONFIG_PATH` - Nginx configuration file path
-- `NGINX_SSL_CONFIG_PATH` - SSL configuration file path
-- `HEALTH_CHECK_*` - Health check timing settings
 
 #### Custom Ports Example
 ```bash
