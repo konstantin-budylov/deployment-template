@@ -1,0 +1,11 @@
+{
+    "name": "manogama/project",
+    "description": "Manogama project",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Developer"
+        }
+    ],
+    "require": {}
+}
