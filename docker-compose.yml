@@ -15,3 +15,9 @@ services:
       - ./deployment/config/nginx/ssl.conf:/etc/nginx/conf.d/ssl.conf
       - ./deployment/config/nginx/ssl:/etc/nginx/ssl:ro
     working_dir: /var/www/html
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:443/ || curl -f http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
