@@ -240,6 +240,44 @@ docker-compose down
 2. Files are automatically available at `http://localhost:8000` (redirects to HTTPS)
 3. Changes are reflected immediately (no rebuild needed)
 
+### PHP Configuration
+The project includes a customizable PHP configuration:
+
+#### PHP Configuration File
+- **Location**: `deployment/config/php.ini`
+- **Container Path**: `/etc/php84/php.ini`
+- **Mount Type**: Read-only volume mount
+- **Customization**: Edit `deployment/config/php.ini` to modify PHP settings
+
+#### Common PHP Settings
+```ini
+# Memory and execution limits
+memory_limit = 256M
+max_execution_time = 30
+max_input_time = 60
+
+# File uploads
+upload_max_filesize = 64M
+post_max_size = 64M
+
+# Error reporting (development)
+display_errors = On
+error_reporting = E_ALL
+
+# Session settings
+session.gc_maxlifetime = 1440
+session.cookie_lifetime = 0
+```
+
+#### Applying PHP Configuration Changes
+```bash
+# Restart container to apply php.ini changes
+docker-compose restart web
+
+# Verify configuration
+docker-compose exec web php84 --ini
+```
+
 ### Environment Variables
 The project supports flexible configuration through environment variables:
 
@@ -327,6 +365,19 @@ Visit `https://localhost:8443` to see the PHP info page showing loaded extension
 # Run individual tests
 docker-compose exec web sh /var/www/html/deployment/tests/test-nginx.sh
 docker-compose exec web sh /var/www/html/deployment/tests/test-ssl.sh
+```
+
+### PHP Configuration Management
+```bash
+# Check current PHP configuration
+docker-compose exec web php84 --ini
+
+# View specific PHP settings
+docker-compose exec web php84 -i | grep memory_limit
+docker-compose exec web php84 -i | grep upload_max_filesize
+
+# Test PHP configuration changes
+docker-compose exec web php84 -m  # List loaded modules
 ```
 
 ## Performance Considerations
