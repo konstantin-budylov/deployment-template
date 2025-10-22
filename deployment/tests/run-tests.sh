@@ -90,8 +90,10 @@ if [ "$RUNNING_IN_CONTAINER" = false ]; then
     
     if [ "$HEALTH_STATUS" = "healthy" ]; then
         print_result 0 "Container health check: $HEALTH_STATUS"
+        HEALTH_RESULT=0
     else
         print_result 1 "Container health check: $HEALTH_STATUS"
+        HEALTH_RESULT=1
     fi
     
     # Check if container is running
