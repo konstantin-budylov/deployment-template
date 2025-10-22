@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./deployment/images
+      dockerfile: Dockerfile
+    container_name: web
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./deployment/config/nginx.conf:/etc/nginx/conf.d/default.conf
+    working_dir: /var/www/html
