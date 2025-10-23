@@ -1,9 +1,9 @@
 .idea/
 
 # Environment files
-!.env.dist
 .env
 .env.local
+env.dist
 
 # Local documentation
 docs/local/
