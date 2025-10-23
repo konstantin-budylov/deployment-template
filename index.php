@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manogama - PHP Information</title>
+    <title>Deployment Template - PHP Information</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,7 +99,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🐘 Manogama PHP Environment</h1>
+            <h1>🐘 Deployment Template PHP Environment</h1>
             <p>PHP Development Environment with Docker</p>
         </div>
 
