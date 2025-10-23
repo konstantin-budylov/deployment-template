@@ -85,7 +85,7 @@ The test scripts automatically load environment variables from the `.env` file (
 ```bash
 HTTP_PORT=9000
 HTTPS_PORT=9443
-NGINX_CONTAINER_NAME=manogama-web
+NGINX_CONTAINER_NAME=deployment-template-web
 ```
 
 ## Prerequisites

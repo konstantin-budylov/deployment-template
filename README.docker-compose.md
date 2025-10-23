@@ -1,6 +1,6 @@
-# Manogama - Docker Development Environment
+# Deployment Template - Docker Development Environment
 
-This document provides comprehensive information about the Manogama project's Docker development environment, including the custom Dockerfile, source images, PHP installation process, and project structure.
+This document provides comprehensive information about the Deployment Template project's Docker development environment, including the custom Dockerfile, source images, PHP installation process, and project structure.
 
 ## Project Status
 
@@ -12,7 +12,7 @@ This document provides comprehensive information about the Manogama project's Do
 ## Project Structure
 
 ```
-manogama/
+deployment-template/
 ├── deployment/
 │   ├── config/
 │   │   ├── nginx/
@@ -430,7 +430,7 @@ nano .env
 # .env file
 HTTP_PORT=9000
 HTTPS_PORT=9443
-NGINX_CONTAINER_NAME=manogama-web
+NGINX_CONTAINER_NAME=deployment-template-web
 ```
 
 ### Testing

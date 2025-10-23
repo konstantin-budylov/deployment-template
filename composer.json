@@ -1,10 +1,11 @@
 {
-    "name": "manogama/project",
-    "description": "Manogama project",
+    "name": "konstantin-budylov/deployment-template",
+    "description": "Deployment setup template",
     "type": "project",
     "authors": [
         {
-            "name": "Developer"
+            "name": "Konstantin Budylov",
+            "email": "k.budylov@gmail.com"
         }
     ],
     "require": {}

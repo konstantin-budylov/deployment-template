@@ -27,7 +27,7 @@ This project uses environment variables to configure Docker Compose settings. Th
 - `SSL_CERT_PATH` - SSL certificate directory path
 
 ### Application Settings
-- `APP_NAME` - Application name (default: manogama)
+- `APP_NAME` - Application name (default: deployment-template)
 - `APP_ENV` - Environment (development/production)
 - `APP_DEBUG` - Debug mode (true/false)
 
@@ -56,7 +56,7 @@ APP_DEBUG=false
 # .env file with custom ports
 HTTP_PORT=3000
 HTTPS_PORT=3443
-NGINX_CONTAINER_NAME=manogama-web
+NGINX_CONTAINER_NAME=deployment-template-web
 ```
 
 ## Running with Environment Variables
