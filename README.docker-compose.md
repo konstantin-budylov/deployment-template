@@ -242,6 +242,32 @@ docker-compose down
 2. Files are automatically available at `http://localhost:8000` (redirects to HTTPS)
 3. Changes are reflected immediately (no rebuild needed)
 
+### Default Application
+The project includes a comprehensive `index.php` file that provides:
+
+#### PHP Information Dashboard
+- **Environment Overview**: PHP version, server software, document root
+- **Configuration Details**: Memory limits, execution time, upload settings
+- **Extension Status**: Visual indicators for all PHP extensions
+- **Xdebug Information**: Debugging configuration and status
+- **Complete phpinfo()**: Full PHP configuration details
+
+#### Access the Application
+```bash
+# Access via HTTPS (recommended)
+https://localhost:8443/
+
+# Access via HTTP (redirects to HTTPS)
+http://localhost:8000/
+```
+
+#### Features
+- **Responsive Design**: Modern, mobile-friendly interface
+- **Real-time Information**: Live PHP configuration and environment data
+- **Extension Monitoring**: Visual status of all PHP extensions
+- **Debugging Support**: Xdebug configuration and status display
+- **Security Headers**: HTTPS with proper security configuration
+
 ### PHP Configuration
 The project uses the default PHP configuration from the container. PHP settings can be customized by modifying the container's built-in configuration or by adding custom configuration files.
 
