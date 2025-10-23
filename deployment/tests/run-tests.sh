@@ -145,20 +145,20 @@ if docker-compose exec -T mysql mysqladmin ping -h localhost -u root -p${MYSQL_R
     echo -e "${GREEN}✅ MySQL connection test${NC}"
     
     # Test database existence
-    if docker-compose exec -T mysql mysql -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} -e "USE ${MYSQL_DATABASE:-manogama};" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Database '${MYSQL_DATABASE:-manogama}' exists${NC}"
+    if docker-compose exec -T mysql mysql -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} -e "USE ${MYSQL_DATABASE:-test};" > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Database '${MYSQL_DATABASE:-test}' exists${NC}"
         
-        # Test tables
-        TABLE_COUNT=$(docker-compose exec -T mysql mysql -u ${MYSQL_USER:-manogama_user} -p${MYSQL_PASSWORD:-manogama_password} ${MYSQL_DATABASE:-manogama} -e "SHOW TABLES;" 2>/dev/null | wc -l)
-        if [ "$TABLE_COUNT" -gt 0 ]; then
-            echo -e "${GREEN}✅ Database tables exist ($TABLE_COUNT tables)${NC}"
+        # Test database character set
+        CHARSET=$(docker-compose exec -T mysql mysql -u ${MYSQL_USER:-test} -p${MYSQL_PASSWORD:-password} ${MYSQL_DATABASE:-test} -e "SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '${MYSQL_DATABASE:-test}';" 2>/dev/null | tail -n 1)
+        if [ "$CHARSET" = "utf8" ] || [ "$CHARSET" = "utf8mb3" ]; then
+            echo -e "${GREEN}✅ Database character set is UTF8 (${CHARSET})${NC}"
             MYSQL_RESULT=0
         else
-            echo -e "${RED}❌ No database tables found${NC}"
+            echo -e "${RED}❌ Database character set is not UTF8 (found: $CHARSET)${NC}"
             MYSQL_RESULT=1
         fi
     else
-        echo -e "${RED}❌ Database '${MYSQL_DATABASE:-manogama}' does not exist${NC}"
+        echo -e "${RED}❌ Database '${MYSQL_DATABASE:-test}' does not exist${NC}"
         MYSQL_RESULT=1
     fi
 else

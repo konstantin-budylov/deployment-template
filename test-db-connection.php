@@ -17,9 +17,9 @@ if (file_exists($envFile)) {
 // Database configuration
 $host = 'mysql'; // Docker service name
 $port = 3306;
-$database = $_ENV['MYSQL_DATABASE'] ?? 'manogama';
-$username = $_ENV['MYSQL_USER'] ?? 'manogama_user';
-$password = $_ENV['MYSQL_PASSWORD'] ?? 'manogama_password';
+$database = $_ENV['MYSQL_DATABASE'] ?? 'test';
+$username = $_ENV['MYSQL_USER'] ?? 'test';
+$password = $_ENV['MYSQL_PASSWORD'] ?? 'password';
 
 echo "<h1>🗄️ MySQL Database Connection Test</h1>\n";
 echo "<h2>Connection Details</h2>\n";
@@ -56,15 +56,11 @@ try {
             echo "<p><strong>MySQL Version:</strong> " . $row['version'] . "</p>\n";
         }
         
-        // Test table query
-        $result = $mysqli->query("SHOW TABLES");
+        // Test database character set
+        $result = $mysqli->query("SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$database'");
         if ($result) {
-            echo "<p><strong>Tables in database:</strong></p>\n";
-            echo "<ul>\n";
-            while ($row = $result->fetch_array()) {
-                echo "<li>" . $row[0] . "</li>\n";
-            }
-            echo "</ul>\n";
+            $row = $result->fetch_assoc();
+            echo "<p><strong>Database character set:</strong> " . $row['DEFAULT_CHARACTER_SET_NAME'] . "</p>\n";
         }
         
         $mysqli->close();
@@ -84,15 +80,11 @@ try {
     
     echo "<p style='color: green;'>✅ PDO connection successful!</p>\n";
     
-    // Test query
-    $stmt = $pdo->query("SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema = '$database'");
+    // Test database character set
+    $stmt = $pdo->query("SELECT DEFAULT_CHARACTER_SET_NAME, DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$database'");
     $row = $stmt->fetch();
-    echo "<p><strong>Table count:</strong> " . $row['table_count'] . "</p>\n";
-    
-    // Test sample data
-    $stmt = $pdo->query("SELECT COUNT(*) as user_count FROM users");
-    $row = $stmt->fetch();
-    echo "<p><strong>Users in database:</strong> " . $row['user_count'] . "</p>\n";
+    echo "<p><strong>Database character set:</strong> " . $row['DEFAULT_CHARACTER_SET_NAME'] . "</p>\n";
+    echo "<p><strong>Database collation:</strong> " . $row['DEFAULT_COLLATION_NAME'] . "</p>\n";
     
 } catch (PDOException $e) {
     echo "<p style='color: red;'>❌ PDO connection error: " . $e->getMessage() . "</p>\n";

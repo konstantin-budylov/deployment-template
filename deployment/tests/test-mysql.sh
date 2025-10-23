@@ -59,7 +59,7 @@ fi
 
 # Test 4: Check if database exists
 echo -e "\n${YELLOW}4. Checking Database Existence${NC}"
-DB_NAME=${MYSQL_DATABASE:-manogama}
+DB_NAME=${MYSQL_DATABASE:-test}
 if mysql -h mysql -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} -e "USE $DB_NAME;" > /dev/null 2>&1; then
     print_result 0 "Database '$DB_NAME' exists"
 else
@@ -68,7 +68,7 @@ fi
 
 # Test 5: Check if user exists
 echo -e "\n${YELLOW}5. Checking MySQL User${NC}"
-MYSQL_USER=${MYSQL_USER:-manogama_user}
+MYSQL_USER=${MYSQL_USER:-test}
 if mysql -h mysql -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} -e "SELECT User FROM mysql.user WHERE User='$MYSQL_USER';" | grep -q "$MYSQL_USER"; then
     print_result 0 "MySQL user '$MYSQL_USER' exists"
 else
@@ -77,22 +77,21 @@ fi
 
 # Test 6: Test user connection
 echo -e "\n${YELLOW}6. Testing User Connection${NC}"
-MYSQL_PASSWORD=${MYSQL_PASSWORD:-manogama_password}
+MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
 if mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD -e "SELECT 1;" > /dev/null 2>&1; then
     print_result 0 "User connection successful"
 else
     print_result 1 "User connection failed"
 fi
 
-# Test 7: Check if tables exist
-echo -e "\n${YELLOW}7. Checking Database Tables${NC}"
-TABLE_COUNT=$(mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $DB_NAME -e "SHOW TABLES;" 2>/dev/null | wc -l)
-if [ "$TABLE_COUNT" -gt 0 ]; then
-    print_result 0 "Database tables exist ($TABLE_COUNT tables found)"
-    echo "   Tables:"
-    mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $DB_NAME -e "SHOW TABLES;" 2>/dev/null | tail -n +2 | sed 's/^/   - /'
+# Test 7: Check database character set
+echo -e "\n${YELLOW}7. Checking Database Character Set${NC}"
+CHARSET=$(mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $DB_NAME -e "SELECT DEFAULT_CHARACTER_SET_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$DB_NAME';" 2>/dev/null | tail -n 1)
+if [ "$CHARSET" = "utf8" ]; then
+    print_result 0 "Database character set is UTF8"
+    echo "   Character set: $CHARSET"
 else
-    print_result 1 "No database tables found"
+    print_result 1 "Database character set is not UTF8 (found: $CHARSET)"
 fi
 
 # Test 8: Check MySQL version
@@ -114,13 +113,14 @@ else
     print_result 1 "MySQL configuration not accessible"
 fi
 
-# Test 10: Test sample data
-echo -e "\n${YELLOW}10. Checking Sample Data${NC}"
-USER_COUNT=$(mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $DB_NAME -e "SELECT COUNT(*) FROM users;" 2>/dev/null | tail -n 1)
-if [ "$USER_COUNT" -gt 0 ]; then
-    print_result 0 "Sample data exists ($USER_COUNT users found)"
+# Test 10: Check database collation
+echo -e "\n${YELLOW}10. Checking Database Collation${NC}"
+COLLATION=$(mysql -h mysql -u $MYSQL_USER -p$MYSQL_PASSWORD $DB_NAME -e "SELECT DEFAULT_COLLATION_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '$DB_NAME';" 2>/dev/null | tail -n 1)
+if [ "$COLLATION" = "utf8_general_ci" ]; then
+    print_result 0 "Database collation is utf8_general_ci"
+    echo "   Collation: $COLLATION"
 else
-    print_result 1 "No sample data found"
+    print_result 1 "Database collation is not utf8_general_ci (found: $COLLATION)"
 fi
 
 echo -e "\n${GREEN}🎉 All MySQL tests passed!${NC}"
