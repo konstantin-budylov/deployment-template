@@ -3,8 +3,8 @@ version: '3.8'
 services:
   web:
     build:
-      context: ./deployment/images
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: deployment/images/Dockerfile
     container_name: ${NGINX_CONTAINER_NAME:-web}
     ports:
       - "${HTTP_PORT:-8000}:80"

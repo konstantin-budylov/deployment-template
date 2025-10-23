@@ -114,13 +114,15 @@ deployment/
 
 ## Docker Compose Configuration
 
+**Build Context**: The Docker build context is set to the project root (`.`) with the Dockerfile located at `deployment/images/Dockerfile`. This allows the build process to access all project files if needed.
+
 ### Service Definition
 ```yaml
 services:
   web:
     build:
-      context: ./deployment/images
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: deployment/images/Dockerfile
     container_name: web
     ports:
       - "8000:80"
