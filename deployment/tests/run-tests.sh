@@ -137,7 +137,36 @@ else
     HEALTH_RESULT=0
 fi
 
-# Test 4: External Connectivity (from host only)
+# Test 4: MySQL Functionality
+print_section "Testing MySQL Functionality"
+echo "Running MySQL tests via docker-compose..."
+MYSQL_RESULT=0
+if docker-compose exec -T mysql mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ MySQL connection test${NC}"
+    
+    # Test database existence
+    if docker-compose exec -T mysql mysql -u root -p${MYSQL_ROOT_PASSWORD:-rootpassword} -e "USE ${MYSQL_DATABASE:-manogama};" > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Database '${MYSQL_DATABASE:-manogama}' exists${NC}"
+        
+        # Test tables
+        TABLE_COUNT=$(docker-compose exec -T mysql mysql -u ${MYSQL_USER:-manogama_user} -p${MYSQL_PASSWORD:-manogama_password} ${MYSQL_DATABASE:-manogama} -e "SHOW TABLES;" 2>/dev/null | wc -l)
+        if [ "$TABLE_COUNT" -gt 0 ]; then
+            echo -e "${GREEN}✅ Database tables exist ($TABLE_COUNT tables)${NC}"
+            MYSQL_RESULT=0
+        else
+            echo -e "${RED}❌ No database tables found${NC}"
+            MYSQL_RESULT=1
+        fi
+    else
+        echo -e "${RED}❌ Database '${MYSQL_DATABASE:-manogama}' does not exist${NC}"
+        MYSQL_RESULT=1
+    fi
+else
+    echo -e "${RED}❌ MySQL connection failed${NC}"
+    MYSQL_RESULT=1
+fi
+
+# Test 5: External Connectivity (from host only)
 if [ "$RUNNING_IN_CONTAINER" = false ]; then
     print_section "Testing External Connectivity"
     
@@ -191,6 +220,11 @@ fi
 TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
 if [ $XDEBUG_RESULT -eq 0 ]; then
+    PASSED_TESTS=$((PASSED_TESTS + 1))
+fi
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+
+if [ $MYSQL_RESULT -eq 0 ]; then
     PASSED_TESTS=$((PASSED_TESTS + 1))
 fi
 TOTAL_TESTS=$((TOTAL_TESTS + 1))

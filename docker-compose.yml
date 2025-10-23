@@ -14,9 +14,36 @@ services:
           - ./deployment/config/xdebug.ini:/etc/php84/conf.d/50_xdebug.ini:ro
           - ${SSL_CERT_PATH:-./deployment/config/nginx/ssl}:/etc/nginx/ssl:ro
     working_dir: /var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f -k https://localhost:443/ || curl -f http://localhost:80/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  mysql:
+    image: mysql:8.0
+    container_name: ${MYSQL_CONTAINER_NAME:-mysql}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-manogama}
+      MYSQL_USER: ${MYSQL_USER:-manogama_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-manogama_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./deployment/database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_data:
