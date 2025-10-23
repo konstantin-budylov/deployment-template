@@ -1,8 +1,9 @@
 FROM nginx:alpine
 
-# Install PHP 8.4-FPM, openssl, and required extensions
+# Install PHP 8.4-FPM, openssl, MySQL client, and required extensions
 RUN apk add --no-cache \
     openssl \
+    mysql-client \
     php84 \
     php84-fpm \
     php84-mysqli \
