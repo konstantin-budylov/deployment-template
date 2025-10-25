@@ -1,10 +1,11 @@
 .idea/
 
 # Environment files
-!.env.dist
 .env
 .env.local
 
 # Local documentation
-docs/local/
+docs/local/*
 
+!/deployment/temp/.gitkeep
+/deployment/temp/*

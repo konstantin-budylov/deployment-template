@@ -1,0 +1,8 @@
+nginx84:
+  compose: deployment/services/nginx84/docker-compose.yml
+  env: deployment/services/nginx84/.env.dist
+  depends:
+    - redis
+redis:
+  compose: deployment/services/redis/docker-compose.yml
+  env: deployment/services/redis/.env.dist
