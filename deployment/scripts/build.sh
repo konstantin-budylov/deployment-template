@@ -465,120 +465,66 @@ move_merged_files() {
     
     local merged_compose="$temp_dir/docker-compose.merged.yml"
     local merged_env="$temp_dir/.env.merged"
-    local root_compose="$project_root/docker-compose.merged.yml"
-    local root_env="$project_root/.env.merged"
+    local root_compose="$project_root/docker-compose.yml"
+    local root_merged_compose="$project_root/docker-compose.merged.yml"
+    local root_env="$project_root/.env"
+    local root_merged_env="$project_root/.env.merged"
     
-    local files_moved=false
-    local final_compose_path=""
+    local compose_target=""
+    local env_target=""
     local final_env_path=""
     
-    # Check and handle docker-compose.merged.yml
-    local compose_in_root=false
-    if [ -f "$merged_compose" ]; then
-        if [ -f "$root_compose" ]; then
-            # File exists in root - check checksums
-            local merged_checksum=$(calculate_checksum "$merged_compose")
-            local root_checksum=$(calculate_checksum "$root_compose")
-            
-            if [ "$merged_checksum" = "$root_checksum" ]; then
-                # Files are identical - keep temp, delete root
-                rm -f "$root_compose"
-                compose_in_root=false
-                if [ "$VERBOSE" = true ]; then
-                    green "Keeping temp docker-compose.merged.yml (identical to root, removed root)"
-                fi
-            else
-                # Files are different - ask for replacement
-                if ask_confirmation "docker-compose.merged.yml in root differs from new merge. Update root?"; then
-                    cp "$merged_compose" "$root_compose"
-                    compose_in_root=true
-                    green "Updated docker-compose.merged.yml in root"
-                    files_moved=true
-                else
-                    # User doesn't want to update root, keep temp
-                    compose_in_root=false
-                    if [ "$VERBOSE" = true ]; then
-                        yellow "Keeping temp docker-compose.merged.yml (root not updated)"
-                    fi
-                fi
-            fi
-        else
-            # File doesn't exist in root - move it
-            if ask_confirmation "Move docker-compose.merged.yml to root directory?"; then
-                cp "$merged_compose" "$root_compose"
-                compose_in_root=true
-                green "Moved docker-compose.merged.yml to root directory"
-                files_moved=true
-            else
-                compose_in_root=false
-                if [ "$VERBOSE" = true ]; then
-                    yellow "Keeping docker-compose.merged.yml in temp directory"
-                fi
-            fi
-        fi
-    fi
-    
-    # Check and handle .env.merged
-    local env_in_root=false
-    if [ -f "$merged_env" ]; then
+    # If docker-compose.yml exists in root
+    if [ -f "$root_compose" ]; then
+        # Replace docker-compose.merged.yml in root (delete if exists, copy new one)
+        [ -f "$root_merged_compose" ] && rm -f "$root_merged_compose"
+        cp "$merged_compose" "$root_merged_compose"
+        compose_target="$root_merged_compose"
+        green "Saved: docker-compose.merged.yml (replaced old one if existed)"
+        
+        # Replace .env.merged in root (delete if exists, copy new one)
+        [ -f "$root_merged_env" ] && rm -f "$root_merged_env"
+        cp "$merged_env" "$root_merged_env"
+        env_target="$root_merged_env"
+        final_env_path="$root_merged_env"
+        green "Saved: .env.merged (replaced old one if existed)"
+        
+        # Update env_file reference
+        update_env_file_reference "$root_merged_compose" "$final_env_path"
+        
+    # If docker-compose.yml does NOT exist in root
+    else
+        # Copy merged compose as docker-compose.yml
+        cp "$merged_compose" "$root_compose"
+        compose_target="$root_compose"
+        green "Saved: docker-compose.yml (no existing compose)"
+        
+        # Handle .env file based on its existence
         if [ -f "$root_env" ]; then
-            # File exists in root - check checksums
-            local merged_checksum=$(calculate_checksum "$merged_env")
-            local root_checksum=$(calculate_checksum "$root_env")
-            
-            if [ "$merged_checksum" = "$root_checksum" ]; then
-                # Files are identical - keep temp, delete root
-                rm -f "$root_env"
-                env_in_root=false
-                if [ "$VERBOSE" = true ]; then
-                    green "Keeping temp .env.merged (identical to root, removed root)"
-                fi
-            else
-                # Files are different - ask for replacement
-                if ask_confirmation ".env.merged in root differs from new merge. Update root?"; then
-                    cp "$merged_env" "$root_env"
-                    env_in_root=true
-                    green "Updated .env.merged in root"
-                    files_moved=true
-                else
-                    # User doesn't want to update root, keep temp
-                    env_in_root=false
-                    if [ "$VERBOSE" = true ]; then
-                        yellow "Keeping temp .env.merged (root not updated)"
-                    fi
-                fi
-            fi
+            # .env exists - save merged as .env.merged
+            [ -f "$root_merged_env" ] && rm -f "$root_merged_env"
+            cp "$merged_env" "$root_merged_env"
+            env_target="$root_merged_env"
+            final_env_path="$root_merged_env"
+            green "Saved: .env.merged (.env exists)"
         else
-            # File doesn't exist in root - move it
-            if ask_confirmation "Move .env.merged to root directory?"; then
-                cp "$merged_env" "$root_env"
-                env_in_root=true
-                green "Moved .env.merged to root directory"
-                files_moved=true
-            else
-                env_in_root=false
-                if [ "$VERBOSE" = true ]; then
-                    yellow "Keeping .env.merged in temp directory"
-                fi
-            fi
+            # .env doesn't exist - save merged as .env
+            [ -f "$root_merged_env" ] && rm -f "$root_merged_env"
+            cp "$merged_env" "$root_env"
+            env_target="$root_env"
+            final_env_path="$root_env"
+            green "Saved: .env (no existing .env)"
         fi
+        
+        # Update env_file reference in docker-compose.yml
+        update_env_file_reference "$root_compose" "$final_env_path"
     fi
     
-    # Determine final file paths based on where files ended up
-    if [ "$compose_in_root" = true ]; then
-        final_compose_path="$root_compose"
-    else
-        final_compose_path="$merged_compose"
-    fi
-    
-    if [ "$env_in_root" = true ]; then
-        final_env_path="$root_env"
-    else
-        final_env_path="$merged_env"
-    fi
-    
-    # Update env_file path in the compose file to point to actual merged env file location
-    update_env_file_reference "$final_compose_path" "$final_env_path"
+    # Report to user
+    echo ""
+    green "Configuration files created:"
+    echo -e "  ${YELLOW}Compose: $compose_target${NC}"
+    echo -e "  ${YELLOW}Environment: $env_target${NC}"
     
     return 0
 }
@@ -705,89 +651,9 @@ main() {
     move_merged_files
     
     # Run docker-compose with merged files
-    run_docker_compose
+    #run_docker_compose
     
     green "all services processed successfully"
-}
-
-# Function to find merged files (either in root or temp directory)
-find_merged_files() {
-    local project_root="$(pwd)"
-    local temp_dir="$OUTPUT_DIR"
-    
-    local root_compose="$project_root/docker-compose.merged.yml"
-    local root_env="$project_root/.env.merged"
-    local temp_compose="$temp_dir/docker-compose.merged.yml"
-    local temp_env="$temp_dir/.env.merged"
-    
-    # Check if files exist in root directory
-    if [ -f "$root_compose" ]; then
-        MERGED_COMPOSE="$root_compose"
-        if [ -f "$root_env" ]; then
-            MERGED_ENV="$root_env"
-        else
-            MERGED_ENV="$temp_env"
-        fi
-    elif [ -f "$temp_compose" ]; then
-        MERGED_COMPOSE="$temp_compose"
-        if [ -f "$temp_env" ]; then
-            MERGED_ENV="$temp_env"
-        else
-            MERGED_ENV=""
-        fi
-    else
-        error "No merged files found!"
-        error "Expected files:"
-        error "  $root_compose or $temp_compose"
-        exit 1
-    fi
-}
-
-# Function to run docker-compose
-run_docker_compose() {
-    # Find merged files
-    find_merged_files
-    
-    if [ "$VERBOSE" = true ]; then
-        green "Running docker-compose..."
-        echo -e "  ${YELLOW}Compose file: ${MERGED_COMPOSE}${NC}"
-        if [ -n "$MERGED_ENV" ]; then
-            echo -e "  ${YELLOW}Environment file: ${MERGED_ENV}${NC}"
-        fi
-        echo -e "  ${YELLOW}Project directory: $(pwd)${NC}"
-    fi
-    
-    # Build docker-compose command
-    local project_root="$(pwd)"
-    local cmd="docker-compose -f \"$MERGED_COMPOSE\" --project-directory \"$project_root\""
-    
-    if [ -n "$MERGED_ENV" ] && [ -f "$MERGED_ENV" ]; then
-        cmd="$cmd --env-file \"$MERGED_ENV\""
-    fi
-    
-    # Add the docker-compose action (up -d by default)
-    cmd="$cmd up -d"
-    
-    if [ "$VERBOSE" = true ]; then
-        echo -e "${GREEN}Executing: ${cmd}${NC}"
-    fi
-    
-    # Execute the command
-    eval "$cmd"
-    
-    if [ $? -eq 0 ]; then
-        green "Docker Compose started successfully"
-        
-        # Show container status
-        if [ "$VERBOSE" = true ]; then
-            echo ""
-            green "Container status:"
-            docker-compose -f "$MERGED_COMPOSE" --project-directory "$project_root" ps
-        fi
-    else
-        error "Failed to start Docker Compose"
-        exit 1
-    fi
 }
 
 # Run main function with all arguments

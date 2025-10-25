@@ -2,6 +2,108 @@
 // PHP Information Page
 // This file displays comprehensive PHP configuration and environment details
 
+// Redis Connection Test (via TCP socket)
+$redisStatus = [
+    'connected' => false,
+    'error' => null,
+    'version' => null,
+    'info' => []
+];
+
+try {
+    // Set shorter timeout for Redis connection
+    $context = stream_context_create([
+        'socket' => [
+            'connect_timeout' => 2,
+            'read_timeout' => 2
+        ]
+    ]);
+    
+    $redisHost = getenv('REDIS_HOST') ?: 'redis';
+    $redisPort = getenv('REDIS_PORT') ?: '6379';
+    
+    // Try to connect via TCP socket with timeout
+    $redisSocket = @stream_socket_client("tcp://$redisHost:$redisPort", $errno, $errstr, 2, STREAM_CLIENT_CONNECT, $context);
+    
+    if ($redisSocket) {
+        $redisStatus['connected'] = true;
+        
+        // Send PING command
+        @fwrite($redisSocket, "PING\r\n");
+        $response = @fread($redisSocket, 512);
+        
+        if ($response === false) {
+            $redisStatus['error'] = 'Failed to read from Redis';
+        } else {
+            // Try to get version via INFO command
+            @fwrite($redisSocket, "INFO server\r\n");
+            stream_set_timeout($redisSocket, 2);
+            
+            $info = '';
+            $timeout = microtime(true) + 2;
+            while (!feof($redisSocket) && microtime(true) < $timeout) {
+                $chunk = @fread($redisSocket, 1024);
+                if ($chunk === false) break;
+                $info .= $chunk;
+            }
+            
+            // Parse version from INFO
+            if (preg_match('/redis_version:(\S+)/', $info, $matches)) {
+                $redisStatus['version'] = $matches[1];
+            }
+            
+            if (preg_match('/db0:keys=(\d+)/', $info, $matches)) {
+                $redisStatus['info']['keys'] = $matches[1];
+            }
+        }
+        
+        @fclose($redisSocket);
+    } else {
+        $redisStatus['error'] = $errstr ?: 'Could not connect to Redis';
+    }
+} catch (Exception $e) {
+    $redisStatus['error'] = $e->getMessage();
+}
+
+// MySQL Connection Test
+$mysqlStatus = [
+    'connected' => false,
+    'error' => null,
+    'version' => null,
+    'databases' => []
+];
+
+try {
+    // Read MySQL credentials from environment variables with fallbacks
+    $mysqlHost = getenv('MYSQL_HOST') ?: 'mysql';
+    $mysqlPort = getenv('MYSQL_PORT') ?: '3306';
+    $mysqlUser = getenv('MYSQL_USER') ?: 'root';
+    $mysqlPassword = getenv('MYSQL_ROOT_PASSWORD') ?: (getenv('MYSQL_PASSWORD') ?: 'root');
+    $mysqlDatabase = getenv('MYSQL_DATABASE') ?: 'test'; // Use test database
+    
+    // Attempt connection (connect without database first to show all databases)
+    $mysqli = new mysqli($mysqlHost, $mysqlUser, $mysqlPassword, '', $mysqlPort);
+    
+    if (!$mysqli->connect_error) {
+        $mysqlStatus['connected'] = true;
+        $mysqlStatus['version'] = $mysqli->server_info;
+        
+        // Get list of databases
+        $result = $mysqli->query("SHOW DATABASES");
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $mysqlStatus['databases'][] = $row['Database'];
+            }
+            $result->free();
+        }
+        $mysqli->close();
+    } else {
+        $mysqlStatus['error'] = $mysqli->connect_error;
+    }
+} catch (Exception $e) {
+    $mysqlStatus['error'] = $e->getMessage();
+}
+
 // Set page title and basic HTML structure
 ?>
 <!DOCTYPE html>
@@ -169,6 +271,60 @@
                 <div class="info-item">
                     <span class="info-label">Xdebug Mode:</span>
                     <span class="info-value"><?php echo ini_get('xdebug.mode'); ?></span>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="info-card">
+                <h3>⚡ Redis Connection</h3>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value"><?php echo $redisStatus['connected'] ? '✅ Connected' : '❌ Failed'; ?></span>
+                </div>
+                <?php if ($redisStatus['connected']): ?>
+                <?php if ($redisStatus['version']): ?>
+                <div class="info-item">
+                    <span class="info-label">Version:</span>
+                    <span class="info-value"><?php echo htmlspecialchars($redisStatus['version']); ?></span>
+                </div>
+                <?php endif; ?>
+                <div class="info-item">
+                    <span class="info-label">Keys:</span>
+                    <span class="info-value"><?php echo $redisStatus['info']['keys'] ?? '0'; ?></span>
+                </div>
+                <?php else: ?>
+                <div class="info-item">
+                    <span class="info-label">Error:</span>
+                    <span class="info-value" style="color: #dc3545;"><?php echo htmlspecialchars($redisStatus['error'] ?? 'Unknown error'); ?></span>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="info-card">
+                <h3>🗄️ MySQL Connection</h3>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value"><?php echo $mysqlStatus['connected'] ? '✅ Connected' : '❌ Failed'; ?></span>
+                </div>
+                <?php if ($mysqlStatus['connected']): ?>
+                <div class="info-item">
+                    <span class="info-label">Version:</span>
+                    <span class="info-value"><?php echo htmlspecialchars($mysqlStatus['version']); ?></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Databases:</span>
+                    <span class="info-value"><?php echo count($mysqlStatus['databases']); ?></span>
+                </div>
+                <?php if (!empty($mysqlStatus['databases'])): ?>
+                <div class="info-item" style="flex-direction: column; align-items: flex-start;">
+                    <span class="info-label" style="margin-bottom: 5px;">Database List:</span>
+                    <span class="info-value" style="font-size: 0.9em;"><?php echo htmlspecialchars(implode(', ', $mysqlStatus['databases'])); ?></span>
+                </div>
+                <?php endif; ?>
+                <?php else: ?>
+                <div class="info-item">
+                    <span class="info-label">Error:</span>
+                    <span class="info-value" style="color: #dc3545;"><?php echo htmlspecialchars($mysqlStatus['error'] ?? 'Unknown error'); ?></span>
                 </div>
                 <?php endif; ?>
             </div>
