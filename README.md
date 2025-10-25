@@ -21,17 +21,17 @@ A flexible Docker Compose deployment template with service orchestration, config
 ### Basic Usage
 
 ```bash
-# Build and start services
+# Build and configure services
 make build nginx84 redis
+
+# Start services
+make up
 
 # Check status
 docker ps
 
 # Stop services
 make down
-
-# Restart services
-make restart
 
 # Clean up (removes containers, volumes, and merged files)
 make clean
@@ -41,7 +41,7 @@ make clean
 
 ### make build `<service1> [service2] ...`
 
-Build and start specified services with automatic dependency resolution.
+Build and configure services with automatic dependency resolution.
 
 ```bash
 make build nginx84 redis
@@ -52,21 +52,19 @@ make build nginx84
 - Resolves service dependencies
 - Merges Docker Compose configurations
 - Merges environment files
-- Moves merged files to root directory
-- Starts services with docker-compose
+- Creates merged files in root directory
 
-### make restart
+### make up
 
-Restart services with existing merged files.
+Start services using the merged configuration files.
 
 ```bash
-make restart
+make up
 ```
 
 **What it does:**
-- Stops running containers
-- Removes containers and networks
-- Starts services with existing configuration
+- Finds merged compose and env files in root directory
+- Starts services with docker-compose up -d
 
 ### make down
 
@@ -81,21 +79,6 @@ make down
 - Removes containers
 - Removes networks
 - Removes orphaned containers (optional)
-
-### make up
-
-Start services with auto-setup from existing or merged files.
-
-```bash
-make up
-```
-
-**What it does:**
-- Looks for existing compose files
-- If not found, creates them from merged files
-- Copies environment files
-- Updates paths in compose files
-- Starts services in detached mode
 
 ### make clean
 
@@ -118,9 +101,8 @@ make clean
 ├── deployment/
 │   ├── scripts/
 │   │   ├── build.sh      # Build and merge services
+│   │   ├── up.sh         # Start services
 │   │   ├── down.sh       # Stop services
-│   │   ├── restart.sh    # Restart services
-│   │   ├── up.sh         # Start with auto-setup
 │   │   └── clean.sh      # Full cleanup
 │   ├── services/         # Service definitions
 │   │   ├── nginx84/
@@ -215,8 +197,11 @@ make down
 ### Initial Setup
 
 ```bash
-# Build and start all services
+# Build and configure services
 make build nginx84 redis
+
+# Start services
+make up
 
 # Check logs
 docker-compose logs -f
@@ -234,8 +219,12 @@ make up
 # Make changes to service configs
 # ...
 
-# Restart to apply changes
-make restart
+# Rebuild if configs changed
+make build nginx84 redis
+
+# Stop and start again
+make down
+make up
 
 # When finished
 make clean

@@ -14,8 +14,6 @@ services:
           - ./deployment/services/nginx84/conf/xdebug.ini:/etc/php84/conf.d/50_xdebug.ini:ro
           - ./deployment/services/nginx84/ssl:/etc/nginx/ssl:ro
     working_dir: /var/www/html
-    depends_on:
-      - redis
 
     healthcheck:
       test: ["CMD-SHELL", "curl -f -k https://localhost:443/ || curl -f http://localhost:80/"]
@@ -25,9 +23,8 @@ services:
       start_period: 40s
 
     networks:
-      - nginx
-      - redis
+      - default
 
 networks:
-    nginx:
+    default:
         driver: bridge

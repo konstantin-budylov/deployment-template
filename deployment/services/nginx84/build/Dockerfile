@@ -29,7 +29,8 @@ RUN apk add --no-cache \
     php84-xmlreader \
     php84-xmlwriter \
     php84-zlib \
-    php84-xdebug
+    php84-xdebug \
+    php84-redis
 
 # Configure PHP-FPM
 RUN sed -i 's/listen = 127.0.0.1:9000/listen = 9000/' /etc/php84/php-fpm.d/www.conf \

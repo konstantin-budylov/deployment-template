@@ -6,7 +6,7 @@ services:
     volumes:
       - 'redis:/data'
     networks:
-      - redis
+      - default
     healthcheck:
       test:
         - CMD
@@ -19,5 +19,5 @@ volumes:
       driver: local
 
 networks:
-    redis:
+    default:
       driver: bridge
